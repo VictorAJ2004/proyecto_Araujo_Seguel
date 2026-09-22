@@ -1,0 +1,9 @@
+server.port: ${PORT:8081}
+spring:
+  datasource:
+    url: ${DATABASE_URL:jdbc:h2:mem:orders}
+    username: ${DATABASE_USERNAME:sa}
+    password: ${DATABASE_PASSWORD:}
+  jpa.hibernate.ddl-auto: update
+  security.oauth2.resourceserver.jwt.issuer-uri: ${COGNITO_ISSUER_URI:https://cognito-idp.us-east-1.amazonaws.com/REPLACE_ME}
+  security.oauth2.resourceserver.jwt.audiences: ${COGNITO_AUDIENCE:REPLACE_ME}

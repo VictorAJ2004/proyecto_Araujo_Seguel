@@ -1,0 +1,3 @@
+package cl.duoc.pedidos.orders;
+import jakarta.persistence.*;
+@Entity @Table(name="orders") public class Order { @Id @GeneratedValue(strategy=GenerationType.IDENTITY) private Long id; private String customer; private String email; private long totalCents; private String status="PENDING"; protected Order() {} public Order(String customer,String email,long totalCents){this.customer=customer;this.email=email;this.totalCents=totalCents;} public Long getId(){return id;} public String getCustomer(){return customer;} public String getEmail(){return email;} public long getTotalCents(){return totalCents;} public String getStatus(){return status;} public void setStatus(String status){this.status=status;} }
