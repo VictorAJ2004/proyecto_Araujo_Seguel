@@ -1,24 +1,40 @@
-import { useEffect, useState } from 'react'
-import { fetchOrders } from './api'
-import type { Order } from './api'
+import { Authenticator } from '@aws-amplify/ui-react';
+import '@aws-amplify/ui-react/styles.css';
+import './amplify';
+import { apiFetch } from './api';
 
 function App() {
-  const [orders, setOrders] = useState<Order[]>([])
-  const [error, setError] = useState('')
+  
+  const probarConexion = async () => {
+    try {
+      // Intentará consumir un endpoint protegido de tu microservicio
+      const data = await apiFetch('/api/orders'); 
+      alert("¡Conexión exitosa con el backend protegido!");
+      console.log(data);
+    } catch (error) {
+      alert("Error de conexión. Revisa la consola para más detalles.");
+    }
+  };
 
-  useEffect(() => {
-    fetchOrders().then(setOrders).catch((reason: Error) => setError(reason.message))
-  }, [])
-
-  return <main className="shell">
-    <header><span>Pedidos360</span><small>Panel protegido</small></header>
-    <section className="hero"><p>OPERACIONES</p><h1>Pedidos bajo control.</h1><span>{orders.length} pedidos registrados</span></section>
-    <section className="panel"><div className="panel-title"><h2>Pedidos recientes</h2><span>API Gateway / Cognito</span></div>
-      {error && <p className="error">{error}</p>}
-      {!error && orders.length === 0 && <p>Aún no hay pedidos o el backend no está conectado.</p>}
-      {orders.map((order) => <article className="order" key={order.id}><div><strong>{order.customer}</strong><small>{order.email}</small></div><b>{(order.totalCents / 100).toFixed(2)} €</b><em>{order.status}</em></article>)}
-    </section>
-  </main>
+  return (
+    <Authenticator>
+      {({ signOut, user }) => (
+        <main style={{ padding: '2rem', fontFamily: 'sans-serif' }}>
+          <h1>Bienvenido a Pedidos360</h1>
+          <p>Has iniciado sesión como: <strong>{user?.signInDetails?.loginId}</strong></p>
+          
+          <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+            <button onClick={probarConexion} style={{ padding: '8px 16px', cursor: 'pointer' }}>
+              Probar Backend Protegido
+            </button>
+            <button onClick={signOut} style={{ padding: '8px 16px', cursor: 'pointer' }}>
+              Cerrar sesión
+            </button>
+          </div>
+        </main>
+      )}
+    </Authenticator>
+  );
 }
 
-export default App
+export default App;

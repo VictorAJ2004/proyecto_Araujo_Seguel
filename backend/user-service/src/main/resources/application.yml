@@ -6,8 +6,8 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: https://cognito-idp.us-east-1.amazonaws.com/us-east-1_xgTBxHxEQ
+          issuer-uri: https://cognito-idp.us-east-1.amazonaws.com/us-east-1_xgz8uSxKQ
 
 aws:
   cognito:
-    client-id: 2juwqhwmo4dncg14c3nsr4gx4p
+    client-id: 2ju9qhemekdnqg14c7m5r9ge3p
