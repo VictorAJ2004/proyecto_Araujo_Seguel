@@ -2,19 +2,21 @@ import { fetchAuthSession } from 'aws-amplify/auth';
 
 export const apiFetch = async (endpoint: string, options: RequestInit = {}) => {
     try {
-        // Extrae la sesión actual
         const session = await fetchAuthSession();
-        // CAMBIO CLAVE: Usamos idToken en lugar de accessToken
+        
+        // ESTO ES LO NUEVO: Imprimimos los grupos en la consola para ver la verdad
+        const payload = session.tokens?.idToken?.payload;
+        console.log("Grupos enviados por Cognito:", payload?.['cognito:groups']);
+
         const token = session.tokens?.idToken?.toString();
 
-        // Prepara las cabeceras inyectando el token
         const headers = {
             'Content-Type': 'application/json',
             ...options.headers,
             ...(token ? { Authorization: `Bearer ${token}` } : {})
         };
 
-        const baseUrl = 'http://localhost:8081'; 
+        const baseUrl = 'https://tiv234t0l4.execute-api.us-east-1.amazonaws.com'; 
         const response = await fetch(`${baseUrl}${endpoint}`, {
             ...options,
             headers
