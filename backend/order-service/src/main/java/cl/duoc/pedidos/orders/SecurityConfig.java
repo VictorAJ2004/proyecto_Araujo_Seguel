@@ -39,13 +39,13 @@ public class SecurityConfig {
             .cors(withDefaults())
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(authz -> authz
-                // Aceptamos ADMIN y CLIENTE (con E) para lectura
-                .requestMatchers(HttpMethod.GET, "/api/orders/**").hasAnyRole("ADMIN", "CLIENTE")
+                // Lectura permitida para ADMIN y CLIENTE en ambas rutas
+                .requestMatchers(HttpMethod.GET, "/api/orders/**", "/api/products/**").hasAnyRole("ADMIN", "CLIENTE")
                 
-                // Solo ADMIN para escritura
-                .requestMatchers(HttpMethod.POST, "/api/orders/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.PUT, "/api/orders/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.DELETE, "/api/orders/**").hasRole("ADMIN")
+                // Escritura, Actualización y Borrado SOLO para ADMIN
+                .requestMatchers(HttpMethod.POST, "/api/orders/**", "/api/products/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/orders/**", "/api/products/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/orders/**", "/api/products/**").hasRole("ADMIN")
                 
                 .anyRequest().authenticated()
             )

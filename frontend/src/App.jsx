@@ -1,61 +1,81 @@
+import { useState, useEffect } from 'react';
 import { Authenticator } from '@aws-amplify/ui-react';
 import '@aws-amplify/ui-react/styles.css';
 import './amplify';
 import { apiFetch } from './api';
 
 function App() {
-  
-  const probarLectura = async () => {
+  const [productos, setProductos] = useState([]);
+  const [nuevoNombre, setNuevoNombre] = useState('');
+  const [nuevoPrecio, setNuevoPrecio] = useState('');
+
+  const cargarProductos = async () => {
     try {
-      const data = await apiFetch('/api/orders'); 
-      alert("¡Lectura exitosa (GET)! Tienes permisos para ver esto.");
-      console.log(data);
+      const data = await apiFetch('/api/products');
+      setProductos(data);
     } catch (error) {
-      alert("Error en lectura. Revisa la consola.");
+      console.error("Error cargando productos:", error);
     }
   };
 
-  const probarEscrituraAdmin = async () => {
+  useEffect(() => {
+    cargarProductos();
+  }, []);
+
+  const agregarProducto = async (e) => {
+    e.preventDefault();
     try {
-      const data = await apiFetch('/api/orders', { method: 'POST' }); 
-      alert("¡Acción de Administrador exitosa (POST)!");
-      console.log(data);
+      await apiFetch('/api/products', {
+        method: 'POST',
+        body: JSON.stringify({ nombre: nuevoNombre, precio: parseFloat(nuevoPrecio) })
+      });
+      alert("Producto agregado (Acción de ADMIN exitosa)");
+      setNuevoNombre('');
+      setNuevoPrecio('');
+      cargarProductos();
     } catch (error) {
-      const mensaje = error.message || "";
-      
-      // Si el backend te rechaza por no tener rol de ADMIN
-      if (mensaje.includes("403")) {
-        alert("Seguridad funcionando: Acceso Denegado (403). Tu usuario es CLIENTE y no puede crear o modificar pedidos.");
-      } 
-      // Si el backend te deja pasar porque eres ADMIN (el error 400 es normal aquí porque no enviamos datos)
-      else if (mensaje.includes("400") && mensaje.includes("Bad Request")) {
-        alert("¡Éxito! Eres ADMIN y el backend te autorizó a realizar acciones.");
-      } 
-      else {
-        console.error(error);
-        alert("Ocurrió un error en la conexión al backend. Revisa la consola.");
-      }
+      if (error.message.includes("403")) alert("Acceso Denegado (403): Solo los Administradores pueden crear productos.");
+    }
+  };
+
+  const eliminarProducto = async (id) => {
+    try {
+      await apiFetch(`/api/products/${id}`, { method: 'DELETE' });
+      alert("Producto eliminado (Acción de ADMIN exitosa)");
+      cargarProductos();
+    } catch (error) {
+      if (error.message.includes("403")) alert("Acceso Denegado (403): Solo los Administradores pueden eliminar productos.");
     }
   };
 
   return (
     <Authenticator>
       {({ signOut, user }) => (
-        <main style={{ padding: '2rem', fontFamily: 'sans-serif' }}>
-          <h1>Bienvenido a Pedidos360</h1>
-          <p>Has iniciado sesión como: <strong>{user?.signInDetails?.loginId}</strong></p>
-          
-          <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
-            <button onClick={probarLectura} style={{ padding: '8px 16px', cursor: 'pointer', backgroundColor: '#4CAF50', color: 'white', border: 'none' }}>
-              Probar Lectura (CLIENTE/ADMIN)
-            </button>
-            <button onClick={probarEscrituraAdmin} style={{ padding: '8px 16px', cursor: 'pointer', backgroundColor: '#f44336', color: 'white', border: 'none' }}>
-              Probar Creación (Solo ADMIN)
-            </button>
-            <button onClick={signOut} style={{ padding: '8px 16px', cursor: 'pointer' }}>
-              Cerrar sesión
-            </button>
+        <main style={{ maxWidth: '800px', margin: '0 auto', padding: '2rem', fontFamily: 'sans-serif' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h2>Catálogo de Productos</h2>
+            <button onClick={signOut} style={{ padding: '8px', cursor: 'pointer' }}>Cerrar sesión ({user?.signInDetails?.loginId})</button>
           </div>
+
+          {/* Formulario de Creación */}
+          <form onSubmit={agregarProducto} style={{ margin: '20px 0', padding: '15px', border: '1px solid #ccc', borderRadius: '5px' }}>
+            <h3>Agregar Nuevo Producto (Solo Admin)</h3>
+            <input type="text" placeholder="Nombre" value={nuevoNombre} onChange={(e) => setNuevoNombre(e.target.value)} required style={{ marginRight: '10px', padding: '5px' }}/>
+            <input type="number" placeholder="Precio" value={nuevoPrecio} onChange={(e) => setNuevoPrecio(e.target.value)} required style={{ marginRight: '10px', padding: '5px' }}/>
+            <button type="submit" style={{ padding: '6px 12px', backgroundColor: '#4CAF50', color: 'white', border: 'none', cursor: 'pointer' }}>Crear</button>
+          </form>
+
+          {/* Lista de Productos */}
+          <ul style={{ listStyle: 'none', padding: 0 }}>
+            {productos.map(p => (
+              <li key={p.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', borderBottom: '1px solid #eee' }}>
+                <span><strong>{p.nombre}</strong> - ${p.precio}</span>
+                <button onClick={() => eliminarProducto(p.id)} style={{ backgroundColor: '#f44336', color: 'white', border: 'none', padding: '5px 10px', cursor: 'pointer' }}>
+                  Eliminar
+                </button>
+              </li>
+            ))}
+          </ul>
         </main>
       )}
     </Authenticator>
