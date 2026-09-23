@@ -4,7 +4,7 @@ export const apiFetch = async (endpoint: string, options: RequestInit = {}) => {
     try {
         const session = await fetchAuthSession();
         
-        // ESTO ES LO NUEVO: Imprimimos los grupos en la consola para ver la verdad
+        // Imprimimos los grupos en la consola para ver la verdad
         const payload = session.tokens?.idToken?.payload;
         console.log("Grupos enviados por Cognito:", payload?.['cognito:groups']);
 
@@ -22,8 +22,18 @@ export const apiFetch = async (endpoint: string, options: RequestInit = {}) => {
             headers
         });
 
+        // 1. Lanzamos el 403 exacto para que App.jsx lo atrape y muestre la alerta
+        if (response.status === 403 || response.status === 401) {
+            throw new Error("403");
+        }
+
         if (!response.ok) {
             throw new Error(`Error ${response.status}: ${response.statusText}`);
+        }
+
+        // 2. Prevenimos el error "Unexpected end of JSON input" al eliminar productos
+        if (options.method === 'DELETE' || response.status === 204) {
+            return null;
         }
 
         return response.json();
