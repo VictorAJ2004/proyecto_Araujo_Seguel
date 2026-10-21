@@ -93,12 +93,22 @@ public class SecurityConfig {
 
     static class AudienceValidator implements OAuth2TokenValidator<Jwt> {
         private final String audience;
-        AudienceValidator(String audience) { this.audience = audience; }
+        
+        AudienceValidator(String audience) { 
+            this.audience = audience; 
+        }
+        
         public OAuth2TokenValidatorResult validate(Jwt jwt) {
             if (jwt.getAudience() != null && jwt.getAudience().contains(audience)) {
                 return OAuth2TokenValidatorResult.success();
             }
-            return OAuth2TokenValidatorResult.failure(new OAuth2Error("invalid_token", "Audience inválido", null));
+            
+            String clientId = jwt.getClaimAsString("client_id");
+            if (audience.equals(clientId)) {
+                return OAuth2TokenValidatorResult.success();
+            }
+            
+            return OAuth2TokenValidatorResult.failure(new OAuth2Error("invalid_token", "Audience/Client ID inválido", null));
         }
     }
 }

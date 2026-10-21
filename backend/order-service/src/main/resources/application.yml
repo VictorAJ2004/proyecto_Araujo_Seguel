@@ -3,9 +3,9 @@ server:
 
 spring:
   datasource:
-    url: ${DATABASE_URL:jdbc:h2:mem:orders}
-    username: ${DATABASE_USERNAME:sa}
-    password: ${DATABASE_PASSWORD:}
+    url: jdbc:mysql://pedidos360-db.ctrz5aq4upwk.us-east-1.rds.amazonaws.com:3306/orders
+    username: admin
+    password: Pedidos.Cloud
   jpa:
     hibernate:
       ddl-auto: update
