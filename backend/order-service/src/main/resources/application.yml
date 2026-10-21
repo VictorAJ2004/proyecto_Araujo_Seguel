@@ -18,3 +18,8 @@ spring:
 aws:
   cognito:
     client-id: 2ju9qhemekdnqg14c7m5r9ge3p
+  sqs:
+    url: "https://sqs.us-east-1.amazonaws.com/570326853378/pedidos-queue"
+  sns:
+    topic-arn: "arn:aws:sns:us-east-1:570326853378:pedidos-topic"
+  region: "us-east-1"

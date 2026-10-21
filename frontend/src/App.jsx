@@ -3,6 +3,7 @@ import { Authenticator } from '@aws-amplify/ui-react';
 import '@aws-amplify/ui-react/styles.css';
 import './amplify';
 import { apiFetch } from './api';
+import './App.css'; // Conectamos la hoja de estilos
 
 function App() {
   const [productos, setProductos] = useState([]);
@@ -27,7 +28,7 @@ function App() {
     try {
       await apiFetch('/api/products', {
         method: 'POST',
-        body: JSON.stringify({ nombre: nuevoNombre, precio: parseFloat(nuevoPrecio) })
+        body: JSON.stringify({ name: nuevoNombre, price: parseFloat(nuevoPrecio) })
       });
       alert("Producto agregado (Acción de ADMIN exitosa)");
       setNuevoNombre('');
@@ -51,32 +52,56 @@ function App() {
   return (
     <Authenticator>
       {({ signOut, user }) => (
-        <main style={{ maxWidth: '800px', margin: '0 auto', padding: '2rem', fontFamily: 'sans-serif' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h2>Catálogo de Productos</h2>
-            <button onClick={signOut} style={{ padding: '8px', cursor: 'pointer' }}>Cerrar sesión ({user?.signInDetails?.loginId})</button>
-          </div>
+        <div className="app-container">
+          <header className="header">
+            <h2>Pedidos360</h2>
+            <button onClick={signOut} className="btn-logout">
+              Cerrar sesión ({user?.signInDetails?.loginId})
+            </button>
+          </header>
 
-          {/* Formulario de Creación */}
-          <form onSubmit={agregarProducto} style={{ margin: '20px 0', padding: '15px', border: '1px solid #ccc', borderRadius: '5px' }}>
-            <h3>Agregar Nuevo Producto (Solo Admin)</h3>
-            <input type="text" placeholder="Nombre" value={nuevoNombre} onChange={(e) => setNuevoNombre(e.target.value)} required style={{ marginRight: '10px', padding: '5px' }}/>
-            <input type="number" placeholder="Precio" value={nuevoPrecio} onChange={(e) => setNuevoPrecio(e.target.value)} required style={{ marginRight: '10px', padding: '5px' }}/>
-            <button type="submit" style={{ padding: '6px 12px', backgroundColor: '#4CAF50', color: 'white', border: 'none', cursor: 'pointer' }}>Crear</button>
-          </form>
+          <main className="main-content">
+            {/* Formulario de Creación */}
+            <div className="admin-card">
+              <h3>Gestión de Catálogo (Admin)</h3>
+              <form onSubmit={agregarProducto} className="form-row">
+                <input 
+                  type="text" 
+                  placeholder="Nombre del producto" 
+                  value={nuevoNombre} 
+                  onChange={(e) => setNuevoNombre(e.target.value)} 
+                  required 
+                  className="input-field"
+                />
+                <input 
+                  type="number" 
+                  placeholder="Precio ($)" 
+                  value={nuevoPrecio} 
+                  onChange={(e) => setNuevoPrecio(e.target.value)} 
+                  required 
+                  className="input-field"
+                />
+                <button type="submit" className="btn-crear">+ Agregar Producto</button>
+              </form>
+            </div>
 
-          {/* Lista de Productos */}
-          <ul style={{ listStyle: 'none', padding: 0 }}>
-            {productos.map(p => (
-              <li key={p.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', borderBottom: '1px solid #eee' }}>
-                <span><strong>{p.nombre}</strong> - ${p.precio}</span>
-                <button onClick={() => eliminarProducto(p.id)} style={{ backgroundColor: '#f44336', color: 'white', border: 'none', padding: '5px 10px', cursor: 'pointer' }}>
-                  Eliminar
-                </button>
-              </li>
-            ))}
-          </ul>
-        </main>
+            {/* Lista de Productos en Tarjetas */}
+            <ul className="products-grid">
+              {productos.map(p => (
+                <li key={p.id} className="product-card">
+                  <div className="product-info">
+                    <h4>{p.name}</h4>
+                    {/* Formatea el precio con separador de miles */}
+                    <p className="product-price">${p.price.toLocaleString('es-CL')}</p>
+                  </div>
+                  <button onClick={() => eliminarProducto(p.id)} className="btn-eliminar">
+                    Eliminar
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </main>
+        </div>
       )}
     </Authenticator>
   );
