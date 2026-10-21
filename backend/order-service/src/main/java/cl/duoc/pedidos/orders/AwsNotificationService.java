@@ -30,9 +30,9 @@ public class AwsNotificationService {
                     .messageBody(mensaje)
                     .build();
             sqsClient.sendMessage(sendMsgRequest);
-            System.out.println("✅ Evento registrado en SQS");
+            System.out.println("Evento registrado en SQS con exito");
         } catch (Exception e) {
-            System.err.println("❌ Error enviando a SQS: " + e.getMessage());
+            System.err.println("Error enviando a SQS: " + e.getMessage());
         }
 
         // Enviar correo por SNS
@@ -43,9 +43,9 @@ public class AwsNotificationService {
                     .subject("Notificación Pedidos360")
                     .build();
             snsClient.publish(request);
-            System.out.println("✅ Correo enviado vía SNS");
+            System.out.println("Correo enviado vía SNS con exito");
         } catch (Exception e) {
-            System.err.println("❌ Error enviando a SNS: " + e.getMessage());
+            System.err.println("Error enviando a SNS: " + e.getMessage());
         }
     }
 }
