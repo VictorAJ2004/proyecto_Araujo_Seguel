@@ -1,5 +1,7 @@
 package cl.duoc.pedidos.orders;
 
+import cl.duoc.pedidos.orders.streaming.OrderEventDTO;
+import cl.duoc.pedidos.orders.streaming.OrderEventProducer;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Min;
@@ -21,9 +23,11 @@ import java.util.List;
 @RequestMapping("/api/orders")
 public class OrderController {
     private final OrderRepository repository;
+    private final OrderEventProducer orderEventProducer;
 
-    public OrderController(OrderRepository repository) {
+    public OrderController(OrderRepository repository, OrderEventProducer orderEventProducer) {
         this.repository = repository;
+        this.orderEventProducer = orderEventProducer;
     }
 
     @GetMapping
@@ -34,14 +38,34 @@ public class OrderController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Order create(@Valid @RequestBody CreateOrder request) {
-        return repository.save(new Order(request.customer(), request.email(), request.totalCents()));
+        Order saved = repository.save(new Order(request.customer(), request.email(), request.totalCents()));
+
+        OrderEventDTO evento = new OrderEventDTO(
+                String.valueOf(saved.getId()),
+                request.customer(),
+                "PEDIDO_CREADO",
+                (double) request.totalCents()
+        );
+        orderEventProducer.publicarEventoPedido(evento);
+
+        return saved;
     }
 
     @PatchMapping("/{id}/status")
     public Order status(@PathVariable Long id, @Valid @RequestBody StatusChange request) {
         Order order = repository.findById(id).orElseThrow();
         order.setStatus(request.status());
-        return repository.save(order);
+        Order saved = repository.save(order);
+
+        OrderEventDTO evento = new OrderEventDTO(
+                String.valueOf(saved.getId()),
+                saved.getCustomer(),
+                "PEDIDO_ACTUALIZADO_" + request.status().toUpperCase(),
+                (double) saved.getTotalCents()
+        );
+        orderEventProducer.publicarEventoPedido(evento);
+
+        return saved;
     }
 
     public record CreateOrder(@NotBlank String customer, @Email @NotBlank String email, @Min(0) long totalCents) { }

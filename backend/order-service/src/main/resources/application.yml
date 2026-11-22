@@ -16,10 +16,20 @@ spring:
           issuer-uri: https://cognito-idp.us-east-1.amazonaws.com/us-east-1_xgz8uSxKQ
 
 aws:
+  region: "us-east-1"
   cognito:
     client-id: 2ju9qhemekdnqg14c7m5r9ge3p
   sqs:
     url: "https://sqs.us-east-1.amazonaws.com/570326853378/pedidos-queue"
   sns:
     topic-arn: "arn:aws:sns:us-east-1:570326853378:pedidos-topic"
-  region: "us-east-1"
+  kinesis:
+    streams:
+      pedidos: pedidos-eventos-stream
+      usuarios: usuarios-actividad-stream
+      dlq: pedidos-dlq-stream
+    shards: 3
+    retention-hours: 24
+    consumer-groups:
+      analitica: cg-analitica-pedidos
+      auditoria: cg-auditoria-pedidos
