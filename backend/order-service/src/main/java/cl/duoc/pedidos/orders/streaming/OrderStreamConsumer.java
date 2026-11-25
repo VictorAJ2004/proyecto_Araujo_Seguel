@@ -30,6 +30,7 @@ public class OrderStreamConsumer {
     private final DlqEventProducer dlqEventProducer;
     private final PedidoAnaliticaService analiticaService;
     private final PedidoAuditoriaService auditoriaService;
+    private final CloudWatchMetricsService metricsService;
 
     // Guarda el iterador actual por cada "consumerGroup:shardId"
     private final Map<String, String> shardIterators = new ConcurrentHashMap<>();
@@ -40,7 +41,8 @@ public class OrderStreamConsumer {
                                CheckpointService checkpointService,
                                DlqEventProducer dlqEventProducer,
                                PedidoAnaliticaService analiticaService,
-                               PedidoAuditoriaService auditoriaService) {
+                               PedidoAuditoriaService auditoriaService,
+                               CloudWatchMetricsService metricsService) {
         this.kinesisClient = kinesisClient;
         this.properties = properties;
         this.objectMapper = objectMapper;
@@ -48,6 +50,7 @@ public class OrderStreamConsumer {
         this.dlqEventProducer = dlqEventProducer;
         this.analiticaService = analiticaService;
         this.auditoriaService = auditoriaService;
+        this.metricsService = metricsService;
     }
 
     @Scheduled(fixedDelay = 3000)
@@ -125,6 +128,7 @@ public class OrderStreamConsumer {
         } catch (JsonProcessingException e) {
             log.error("Evento corrupto (irrecuperable) | group={} | shard={} | causa={}", consumerGroup, shardId, e.getMessage());
             dlqEventProducer.enviarADlq("JSON_INVALIDO", payload, "Error deserializando JSON: " + e.getMessage(), 1, consumerGroup);
+            metricsService.registrarEventoDlq(consumerGroup);
             return;
         }
 
@@ -143,12 +147,14 @@ public class OrderStreamConsumer {
                 if (evento.getEventId() != null) {
                     checkpointService.marcarComoProcesado(consumerGroup, evento.getEventId());
                 }
+                metricsService.registrarEventoProcesado(consumerGroup);
                 return; // Éxito
             } catch (IllegalArgumentException e) {
                 // Error de validación de negocio -> irrecuperable, no sirve reintentar
                 log.error("Error de validación (irrecuperable) | eventId={} | group={} | intento={} | causa={}",
                         evento.getEventId(), consumerGroup, intento, e.getMessage());
                 dlqEventProducer.enviarADlq(evento.getEventId(), payload, e.getMessage(), intento, consumerGroup);
+                metricsService.registrarEventoDlq(consumerGroup);
                 return;
             } catch (Exception e) {
                 // Error transitorio -> reintentar con espera creciente (backoff)
@@ -156,6 +162,7 @@ public class OrderStreamConsumer {
                         evento.getEventId(), consumerGroup, intento, MAX_REINTENTOS, e.getMessage());
                 if (intento >= MAX_REINTENTOS) {
                     dlqEventProducer.enviarADlq(evento.getEventId(), payload, "Reintentos agotados: " + e.getMessage(), intento, consumerGroup);
+                    metricsService.registrarEventoDlq(consumerGroup);
                 } else {
                     try {
                         Thread.sleep(500L * intento); // Espera creciente: 500ms, 1000ms...
