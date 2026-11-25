@@ -23,6 +23,8 @@ aws:
     url: "https://sqs.us-east-1.amazonaws.com/570326853378/pedidos-queue"
   sns:
     topic-arn: "arn:aws:sns:us-east-1:570326853378:pedidos-topic"
+  dynamodb:
+    checkpoints-table: pedidos360-kinesis-checkpoints
   kinesis:
     streams:
       pedidos: pedidos-eventos-stream
